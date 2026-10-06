@@ -447,9 +447,8 @@
             }
 
             const task = tasks[currentTaskIndex];
-            const stepNum = currentTaskIndex + 1;
             
-            document.getElementById('task-badge').innerText = `Ülesanne ${stepNum} / ${tasks.length}`;
+            // Kustutatud dünaamiline ülesannete loendur, badge näitab lihtsalt staatilist HTML teksti.
             document.getElementById('task-title').innerText = task.title;
             document.getElementById('task-desc').innerText = task.desc;
             
