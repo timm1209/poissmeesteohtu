@@ -15,58 +15,26 @@
             min-height: 100vh;
             -webkit-tap-highlight-color: transparent;
         }
-        
         .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .slide-up { animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 4px solid #16a34a;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        .spinner-small {
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 3px solid #fff;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 
-            0% { transform: rotate(0deg); } 
-            100% { transform: rotate(360deg); } 
-        }
-
-        input[type="file"] {
-            display: none;
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .spinner { border: 4px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top: 4px solid #16a34a; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        .spinner-small { border: 3px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top: 3px solid #fff; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        input[type="file"] { display: none; }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center p-4">
 
+    <!-- Parooli aken -->
     <div id="password-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center fade-in">
         <div class="bg-white rounded-2xl p-6 w-11/12 max-w-sm shadow-2xl relative">
-            <button onclick="closePasswordModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition-colors">
-                <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
+            <button onclick="window.closePasswordModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
             <h3 class="text-xl font-extrabold text-gray-800 mb-4"><i class="fa-solid fa-lock text-green-500 mr-2"></i>Mängujuht</h3>
-            <input type="password" id="admin-password" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 mb-2" placeholder="Sisesta parool" onkeydown="if(event.key === 'Enter') checkPassword()">
+            <input type="password" id="admin-password" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 mb-2" placeholder="Sisesta parool" onkeydown="if(event.key === 'Enter') window.checkPassword()">
             <p id="password-error" class="hidden text-red-500 text-sm font-bold mb-4">Vale parool!</p>
-            <button onclick="checkPassword()" class="w-full py-3 bg-gray-800 text-white rounded-lg font-bold hover:bg-gray-900 transition-colors mt-2">
-                Sisene
-            </button>
+            <button onclick="window.checkPassword()" class="w-full py-3 bg-gray-800 text-white rounded-lg font-bold hover:bg-gray-900 transition-colors mt-2">Sisene</button>
         </div>
     </div>
 
@@ -84,20 +52,14 @@
             
             <!-- 1. Avakuva -->
             <div id="start-screen" class="flex flex-col items-center justify-center flex-1 text-center slide-up py-6 relative">
-                
-                <button onclick="showPasswordModal()" class="absolute -top-4 -right-4 p-4 text-gray-400 hover:text-gray-700 transition-colors" aria-label="Mängujuhi paneel">
-                    <i class="fa-solid fa-gear text-2xl"></i>
-                </button>
-
-                <div class="mb-6 mt-4">
-                    <i class="fa-solid fa-map-location-dot text-6xl text-green-500 drop-shadow-md"></i>
-                </div>
+                <button onclick="window.showPasswordModal()" class="absolute -top-4 -right-4 p-4 text-gray-400 hover:text-gray-700 transition-colors" aria-label="Mängujuhi paneel"><i class="fa-solid fa-gear text-2xl"></i></button>
+                <div class="mb-6 mt-4"><i class="fa-solid fa-map-location-dot text-6xl text-green-500 drop-shadow-md"></i></div>
                 <h2 class="text-3xl font-extrabold text-gray-800 mb-4">Ahti viimane seiklus!</h2>
                 <p class="text-gray-600 mb-8 font-medium text-base leading-relaxed">Selles mängus pead läbima erinevaid baare ja võtma igast baarist ühe joogi ning tõestama seda pildiga.</p>
                 
-                <div id="no-tasks-warning" class="hidden text-red-500 mb-4 font-bold">Mängus pole ühtegi ülesannet! Seadista need hammasratta alt.</div>
+                <div id="no-tasks-warning" class="hidden text-red-500 mb-4 font-bold">Laen andmeid...</div>
                 
-                <button onclick="startGame()" id="btn-start" class="w-full py-4 rounded-xl font-bold text-lg text-white bg-green-600 hover:bg-green-700 active:scale-95 transition-all shadow-lg flex items-center justify-center mt-auto mb-4">
+                <button onclick="window.startGame()" id="btn-start" class="w-full py-4 rounded-xl font-bold text-lg text-white bg-green-600 hover:bg-green-700 active:scale-95 transition-all shadow-lg flex items-center justify-center mt-auto mb-4 opacity-50 pointer-events-none">
                     <i class="fa-solid fa-play mr-2"></i> Alusta mängu
                 </button>
             </div>
@@ -106,9 +68,7 @@
             <div id="gm-screen" class="hidden flex-col flex-1 slide-up">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-extrabold text-gray-800"><i class="fa-solid fa-gear text-gray-500 mr-2"></i>Seaded</h2>
-                    <button onclick="showStartScreen()" class="text-gray-500 hover:text-gray-800 px-3 py-2 bg-gray-100 rounded-lg text-sm font-bold flex items-center">
-                        <i class="fa-solid fa-arrow-left mr-1"></i> Tagasi
-                    </button>
+                    <button onclick="window.showStartScreen()" class="text-gray-500 hover:text-gray-800 px-3 py-2 bg-gray-100 rounded-lg text-sm font-bold flex items-center"><i class="fa-solid fa-arrow-left mr-1"></i> Tagasi</button>
                 </div>
 
                 <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6">
@@ -121,15 +81,14 @@
                         <input type="text" id="new-task-loc-name" placeholder="Koha nimi mängijale (nt. Vana tamm)" class="w-full mb-2 px-4 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <input type="text" id="new-task-address" placeholder="Täpne aadress otsimiseks (nt. Lossi 1, Viljandi)" class="w-full mb-2 px-4 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
-
-                    <button id="btn-add-task" onclick="addTask()" class="w-full py-3 bg-gray-800 text-white rounded-lg font-bold hover:bg-gray-900 transition-colors flex justify-center items-center">
+                    <button id="btn-add-task" onclick="window.addTask()" class="w-full py-3 bg-gray-800 text-white rounded-lg font-bold hover:bg-gray-900 transition-colors flex justify-center items-center">
                         <i class="fa-solid fa-plus mr-2" id="add-icon"></i> 
                         <div class="spinner-small hidden mr-2" id="add-spinner"></div>
                         Lisa ülesanne
                     </button>
                 </div>
 
-                <h3 class="font-bold text-gray-700 mb-3 text-sm uppercase tracking-wide">Olemasolevad ülesanded</h3>
+                <h3 class="font-bold text-gray-700 mb-3 text-sm uppercase tracking-wide">Olemasolevad ülesanded (Pilves)</h3>
                 <div class="flex-1 overflow-y-auto pr-2 mb-4">
                     <ul id="admin-task-list" class="space-y-3"></ul>
                 </div>
@@ -142,7 +101,6 @@
                     <h2 id="task-title" class="text-3xl font-extrabold text-gray-800 mt-4 mb-2 leading-tight">Laen...</h2>
                     <p id="task-desc" class="text-gray-600 text-base font-medium mb-4">Palun oota.</p>
                     
-                    <!-- Kauguse näidik -->
                     <div id="location-info-box" class="hidden bg-blue-50 border border-blue-100 rounded-xl p-3 inline-block shadow-sm">
                         <div class="flex items-center justify-center space-x-2 text-blue-800">
                             <i class="fa-solid fa-location-dot text-xl text-blue-500"></i>
@@ -173,14 +131,12 @@
                     </div>
 
                     <label id="upload-label" for="camera-input" class="w-full border-2 border-dashed border-green-400 bg-green-50 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer hover:bg-green-100 hover:border-green-500 transition-all group shadow-sm active:scale-95">
-                        <div class="bg-white text-green-600 rounded-full w-16 h-16 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-md">
-                            <i class="fa-solid fa-camera text-3xl"></i>
-                        </div>
+                        <div class="bg-white text-green-600 rounded-full w-16 h-16 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-md"><i class="fa-solid fa-camera text-3xl"></i></div>
                         <span class="font-extrabold text-gray-700 text-lg">Tee pilt või lae üles</span>
                     </label>
                     <input type="file" accept="image/*" capture="environment" id="camera-input">
 
-                    <button onclick="showStartScreen()" class="mt-6 text-gray-500 hover:text-gray-800 text-sm font-semibold underline decoration-gray-300 underline-offset-4 transition-colors">
+                    <button onclick="window.showStartScreen()" class="mt-6 text-gray-500 hover:text-gray-800 text-sm font-semibold underline decoration-gray-300 underline-offset-4 transition-colors">
                         Katkesta ja mine tagasi avakuvale
                     </button>
                 </div>
@@ -196,27 +152,65 @@
                 </div>
                 <h2 class="text-3xl font-extrabold text-gray-800 mb-3">Palju õnne!</h2>
                 <p class="text-gray-600 mb-8 font-medium text-lg leading-relaxed">Oled edukalt läbinud kõik punktid ja mängu lõpetanud.</p>
-                <button onclick="showStartScreen()" class="w-full py-4 rounded-xl font-bold text-lg text-white bg-green-600 hover:bg-green-700 active:scale-95 transition-all shadow-lg flex items-center justify-center mt-auto">
+                <button onclick="window.showStartScreen()" class="w-full py-4 rounded-xl font-bold text-lg text-white bg-green-600 hover:bg-green-700 active:scale-95 transition-all shadow-lg flex items-center justify-center mt-auto">
                     <i class="fa-solid fa-house mr-2"></i> Tagasi avakuvale
                 </button>
             </div>
-
         </main>
     </div>
 
-    <script>
-        const DEFAULT_TASKS = [
-            { title: "Punkt 1", desc: "Otsi üles suur puu ja pildista seda.", locName: "", coords: null },
-            { title: "Finiš", desc: "Tee üks äge selfie või pilt meeskonnast!", locName: "", coords: null }
-        ];
+    <!-- Firebase ja mänguloogika -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        let tasks = JSON.parse(localStorage.getItem('seiklus_tasks')) || DEFAULT_TASKS;
-        let currentTaskIndex = 0;
-        let watchId = null;
-
-        // --- CLOUDINARY SEADED ---
+        // ==========================================
+        // 1. SINU FIREBASE'I JA CLOUDINARY SEADED (Täidetud!)
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyCSr1nNuL-HvBRbveSyKJtI1sVF3xwXnLY",
+            authDomain: "seiklusmang-d69a0.firebaseapp.com",
+            projectId: "seiklusmang-d69a0",
+            storageBucket: "seiklusmang-d69a0.firebasestorage.app",
+            messagingSenderId: "1035026879084",
+            appId: "1:1035026879084:web:c2e4098e78f5c3bdc5fe49"
+        };
+        
         const cloudName = 'x1dmqyw4'; 
         const uploadPreset = 'seiklusmang_pildid'; 
+        // ==========================================
+
+        let tasks = [];
+        let currentTaskIndex = 0;
+        let watchId = null;
+        let gameDocRef = null;
+
+        // Initsialiseeri Firebase
+        try {
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            // Loome viite andmebaasi dokumendile, kus hoiame ülesandeid
+            gameDocRef = doc(db, 'seiklusmang', 'ulesanded');
+
+            // Kuulame andmebaasi muudatusi REAALAJAS
+            onSnapshot(gameDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    tasks = docSnap.data().taskList || [];
+                } else {
+                    tasks = []; // Kui baas on tühi
+                }
+                updateUIAfterDataLoad();
+                
+                // Kui mängujuht on ekraanil, uuendame kohe nimekirja
+                if (!document.getElementById('gm-screen').classList.contains('hidden')) {
+                    window.renderAdminTasks();
+                }
+            });
+        } catch(error) {
+            console.error("Firebase'i viga:", error);
+            document.getElementById('no-tasks-warning').innerText = "Firebase on seadistamata! Muuda koodis firebaseConfig andmeid.";
+            document.getElementById('no-tasks-warning').classList.remove('hidden');
+        }
 
         const screens = {
             start: document.getElementById('start-screen'),
@@ -225,24 +219,24 @@
             end: document.getElementById('end-screen')
         };
         
-        function showPasswordModal() {
+        window.showPasswordModal = function() {
             document.getElementById('password-modal').classList.remove('hidden');
             document.getElementById('admin-password').value = '';
             document.getElementById('password-error').classList.add('hidden');
-        }
+        };
 
-        function closePasswordModal() {
+        window.closePasswordModal = function() {
             document.getElementById('password-modal').classList.add('hidden');
-        }
+        };
 
-        function checkPassword() {
+        window.checkPassword = function() {
             if (document.getElementById('admin-password').value === "Karin") {
-                closePasswordModal();
-                showGameMasterScreen();
+                window.closePasswordModal();
+                window.showGameMasterScreen();
             } else {
                 document.getElementById('password-error').classList.remove('hidden');
             }
-        }
+        };
 
         function hideAllScreens() {
             Object.values(screens).forEach(screen => {
@@ -254,31 +248,39 @@
             stopTracking();
         }
 
-        function showStartScreen() {
+        window.showStartScreen = function() {
             hideAllScreens();
             currentTaskIndex = 0;
-            screens.start.classList.remove('hidden', 'opacity-50', 'pointer-events-none');
+            screens.start.classList.remove('hidden');
             screens.start.classList.add('flex');
-            
+            updateUIAfterDataLoad();
+        };
+
+        function updateUIAfterDataLoad() {
             const btnStart = document.getElementById('btn-start');
             const warning = document.getElementById('no-tasks-warning');
-            if(tasks.length === 0) {
-                btnStart.classList.add('opacity-50', 'pointer-events-none');
-                warning.classList.remove('hidden');
-            } else {
-                btnStart.classList.remove('opacity-50', 'pointer-events-none');
-                warning.classList.add('hidden');
+            
+            // Ainult siis uuenda, kui oleme avakuval
+            if(!screens.start.classList.contains('hidden')) {
+                if(tasks.length === 0) {
+                    btnStart.classList.add('opacity-50', 'pointer-events-none');
+                    warning.innerText = "Mängus pole ühtegi ülesannet! Lisa need hammasratta alt.";
+                    warning.classList.remove('hidden');
+                } else {
+                    btnStart.classList.remove('opacity-50', 'pointer-events-none');
+                    warning.classList.add('hidden');
+                }
             }
         }
 
-        function showGameMasterScreen() {
+        window.showGameMasterScreen = function() {
             hideAllScreens();
             screens.gm.classList.remove('hidden');
             screens.gm.classList.add('flex');
-            renderAdminTasks();
-        }
+            window.renderAdminTasks();
+        };
 
-        function startGame() {
+        window.startGame = function() {
             if(tasks.length === 0) return;
             hideAllScreens();
             currentTaskIndex = 0;
@@ -287,13 +289,21 @@
             document.getElementById('progress-container').classList.remove('hidden');
             document.getElementById('progress-text').classList.remove('hidden');
             renderTask();
+        };
+
+        // Salvestab andmed pilve
+        async function saveTasksToCloud() {
+            if(gameDocRef) {
+                try {
+                    await setDoc(gameDocRef, { taskList: tasks });
+                } catch(error) {
+                    console.error("Viga salvestamisel:", error);
+                    alert("Andmete salvestamine ebaõnnestus!");
+                }
+            }
         }
 
-        function saveTasksToStorage() {
-            localStorage.setItem('seiklus_tasks', JSON.stringify(tasks));
-        }
-
-        function renderAdminTasks() {
+        window.renderAdminTasks = function() {
             const list = document.getElementById('admin-task-list');
             list.innerHTML = '';
             
@@ -318,16 +328,16 @@
                         ${locBadge}
                     </div>
                     <div class="flex items-center space-x-1">
-                        <button onclick="moveTaskUp(${index})" class="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 transition-colors ${index === 0 ? 'opacity-30 cursor-not-allowed' : ''}" ${index === 0 ? 'disabled' : ''}><i class="fa-solid fa-chevron-up"></i></button>
-                        <button onclick="moveTaskDown(${index})" class="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 transition-colors ${index === tasks.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}" ${index === tasks.length - 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-down"></i></button>
-                        <button onclick="deleteTask(${index})" class="text-red-500 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors ml-2"><i class="fa-solid fa-trash-can"></i></button>
+                        <button onclick="window.moveTaskUp(${index})" class="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 transition-colors ${index === 0 ? 'opacity-30 cursor-not-allowed' : ''}" ${index === 0 ? 'disabled' : ''}><i class="fa-solid fa-chevron-up"></i></button>
+                        <button onclick="window.moveTaskDown(${index})" class="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 transition-colors ${index === tasks.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}" ${index === tasks.length - 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-down"></i></button>
+                        <button onclick="window.deleteTask(${index})" class="text-red-500 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors ml-2"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                 `;
                 list.appendChild(li);
             });
-        }
+        };
 
-        async function addTask() {
+        window.addTask = async function() {
             const title = document.getElementById('new-task-title').value.trim();
             const desc = document.getElementById('new-task-desc').value.trim();
             const locName = document.getElementById('new-task-loc-name').value.trim();
@@ -345,7 +355,6 @@
             let coords = null;
 
             if (address) {
-                // Otsime koordinaate
                 icon.classList.add('hidden');
                 spinner.classList.remove('hidden');
                 btn.disabled = true;
@@ -357,10 +366,9 @@
                     if (data && data.length > 0) {
                         coords = { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
                     } else {
-                        alert(`Aadressi "${address}" ei leitud. Ülesanne lisatakse ilma GPS koordinaatideta.`);
+                        alert(`Aadressi "${address}" ei leitud. Lisame ilma asukohata.`);
                     }
                 } catch (e) {
-                    console.error("Viga aadressi otsimisel", e);
                     alert("Aadressi otsimine ebaõnnestus. Lisame ilma asukohata.");
                 }
 
@@ -371,51 +379,47 @@
             }
             
             tasks.push({ title, desc, locName, coords });
-            saveTasksToStorage();
+            await saveTasksToCloud();
             
             document.getElementById('new-task-title').value = '';
             document.getElementById('new-task-desc').value = '';
             document.getElementById('new-task-loc-name').value = '';
             document.getElementById('new-task-address').value = '';
-            
-            renderAdminTasks();
-        }
+        };
 
-        function deleteTask(index) {
+        window.deleteTask = async function(index) {
             tasks.splice(index, 1);
-            saveTasksToStorage();
-            renderAdminTasks();
-        }
+            await saveTasksToCloud();
+        };
 
-        function moveTaskUp(index) {
+        window.moveTaskUp = async function(index) {
             if (index > 0) {
                 const temp = tasks[index];
                 tasks[index] = tasks[index - 1];
                 tasks[index - 1] = temp;
-                saveTasksToStorage();
-                renderAdminTasks();
+                await saveTasksToCloud();
             }
-        }
-        function moveTaskDown(index) {
+        };
+
+        window.moveTaskDown = async function(index) {
             if (index < tasks.length - 1) {
                 const temp = tasks[index];
                 tasks[index] = tasks[index + 1];
                 tasks[index + 1] = temp;
-                saveTasksToStorage();
-                renderAdminTasks();
+                await saveTasksToCloud();
             }
-        }
+        };
 
         // --- ASUKOHA (GPS) LOOGIKA ---
         function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371e3; // Maa raadius meetrites
+            const R = 6371e3;
             const p1 = lat1 * Math.PI/180;
             const p2 = lat2 * Math.PI/180;
             const dp = (lat2-lat1) * Math.PI/180;
             const dl = (lon2-lon1) * Math.PI/180;
             const a = Math.sin(dp/2) * Math.sin(dp/2) + Math.cos(p1) * Math.cos(p2) * Math.sin(dl/2) * Math.sin(dl/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c; // Kaugus meetrites
+            return R * c;
         }
 
         function startTracking(targetCoords) {
@@ -423,20 +427,13 @@
                 document.getElementById('task-distance').innerText = "Kaugus: otsin GPS signaali...";
                 watchId = navigator.geolocation.watchPosition((position) => {
                     const dist = calculateDistance(position.coords.latitude, position.coords.longitude, targetCoords.lat, targetCoords.lon);
-                    
-                    let distText = "";
-                    if (dist < 1000) {
-                        distText = `Kaugus: ${Math.round(dist)} m`;
-                    } else {
-                        distText = `Kaugus: ${(dist/1000).toFixed(1)} km`;
-                    }
+                    let distText = dist < 1000 ? `Kaugus: ${Math.round(dist)} m` : `Kaugus: ${(dist/1000).toFixed(1)} km`;
                     document.getElementById('task-distance').innerText = distText;
                 }, (error) => {
-                    console.error("GPS viga", error);
                     document.getElementById('task-distance').innerText = "Kaugus: asukoht teadmata (luba GPS)";
                 }, { enableHighAccuracy: true });
             } else {
-                document.getElementById('task-distance').innerText = "Kaugus: sinu seade ei toeta GPSi";
+                document.getElementById('task-distance').innerText = "Kaugus: GPS puudub";
             }
         }
 
@@ -447,7 +444,6 @@
             }
         }
 
-        // --- MÄNGU LOOGIKA ---
         function renderTask() {
             stopTracking();
 
@@ -482,7 +478,6 @@
             document.getElementById('success-view').classList.add('hidden');
             document.getElementById('error-message').classList.add('hidden');
             document.getElementById('loading-view').classList.add('hidden');
-            
             document.getElementById('upload-label').classList.remove('hidden');
             document.getElementById('camera-input').value = ''; 
             
@@ -516,7 +511,6 @@
                 if (data.secure_url) {
                     document.getElementById('loading-view').classList.add('hidden');
                     document.getElementById('loading-view').classList.remove('flex');
-                    
                     document.getElementById('uploaded-image-preview').src = data.secure_url;
                     document.getElementById('success-view').classList.remove('hidden');
                     document.getElementById('success-view').classList.add('flex');
@@ -525,7 +519,6 @@
                         currentTaskIndex++;
                         renderTask();
                     }, 2000);
-                    
                 } else {
                     throw new Error(data.error?.message || "Cloudinary viga");
                 }
@@ -537,10 +530,6 @@
                 document.getElementById('error-message').innerText = "Viga laadimisel. Proovi uuesti!";
             }
         });
-
-        window.onload = () => {
-            showStartScreen();
-        };
     </script>
 </body>
 </html>
