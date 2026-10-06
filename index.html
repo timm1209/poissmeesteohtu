@@ -91,21 +91,29 @@
                 <div class="text-center mb-6 pt-4">
                     <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border border-green-200" id="task-badge">Sinu ülesanne</span>
                     <h2 id="task-title" class="text-3xl font-extrabold text-gray-800 mt-4 mb-2 leading-tight">Laen...</h2>
-                    <p id="task-desc" class="text-gray-600 text-base font-medium mb-4">Palun oota.</p>
                     
-                    <div id="location-info-box" class="hidden bg-blue-50 border border-blue-100 rounded-xl p-3 inline-block shadow-sm">
-                        <div class="flex items-center justify-center space-x-2 text-blue-800">
-                            <i class="fa-solid fa-location-dot text-xl text-blue-500"></i>
+                    <!-- Koha info ja GPS -->
+                    <div id="location-info-box" class="hidden bg-blue-50 border border-blue-100 rounded-xl p-4 mt-4 inline-block shadow-sm w-full">
+                        <div class="flex items-center justify-center space-x-3 text-blue-800 mb-2">
+                            <i class="fa-solid fa-location-dot text-2xl text-blue-500"></i>
                             <div class="text-left">
-                                <p class="text-xs font-bold uppercase text-blue-400" id="task-loc-name">Kus: ...</p>
-                                <p class="font-extrabold text-lg" id="task-distance">Kaugus: arvutan...</p>
+                                <p class="text-sm font-bold uppercase text-blue-500" id="task-loc-name">Kus: ...</p>
+                                <p class="font-extrabold text-xl" id="task-distance">Kaugus: arvutan...</p>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Ülesande sisu (algselt peidus, kui on asukoht) -->
+                    <p id="task-desc" class="hidden text-gray-700 text-lg font-medium mt-6 bg-gray-50 p-4 rounded-xl border border-gray-200">Palun oota.</p>
                 </div>
 
                 <div class="mt-auto flex flex-col items-center justify-center w-full pb-4">
                     <div id="error-message" class="hidden w-full bg-red-50 border border-red-200 text-red-600 text-sm p-3 rounded-xl mb-4 text-center font-medium"></div>
+
+                    <!-- Olen kohal nupp -->
+                    <button id="arrive-btn" onclick="window.arriveAtLocation()" class="hidden w-full py-4 bg-blue-600 text-white rounded-xl font-bold text-lg hover:bg-blue-700 active:scale-95 transition-all shadow-lg mb-4">
+                        <i class="fa-solid fa-person-walking mr-2"></i> Olen kohal!
+                    </button>
 
                     <div id="success-view" class="hidden flex-col items-center justify-center w-full mb-4 fade-in">
                         <div class="relative w-full aspect-square max-w-[250px] rounded-2xl overflow-hidden shadow-lg border-4 border-green-400 mb-4 bg-gray-100">
@@ -122,7 +130,8 @@
                         <p class="text-gray-500 font-bold">Laen pilti üles...</p>
                     </div>
 
-                    <label id="upload-label" for="camera-input" class="w-full border-2 border-dashed border-green-400 bg-green-50 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer hover:bg-green-100 hover:border-green-500 transition-all group shadow-sm active:scale-95">
+                    <!-- Pildistamise nupp (algselt peidus, kui on asukoht) -->
+                    <label id="upload-label" for="camera-input" class="hidden w-full border-2 border-dashed border-green-400 bg-green-50 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer hover:bg-green-100 hover:border-green-500 transition-all group shadow-sm active:scale-95">
                         <div class="bg-white text-green-600 rounded-full w-16 h-16 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-md"><i class="fa-solid fa-camera text-3xl"></i></div>
                         <span class="font-extrabold text-gray-700 text-lg">Tee pilt või lae üles</span>
                     </label>
@@ -181,19 +190,16 @@
         try {
             const app = initializeApp(firebaseConfig);
             const db = getFirestore(app);
-            // Loome viite andmebaasi dokumendile, kus hoiame ülesandeid
             gameDocRef = doc(db, 'seiklusmang', 'ulesanded');
 
-            // Kuulame andmebaasi muudatusi REAALAJAS
             onSnapshot(gameDocRef, (docSnap) => {
                 if (docSnap.exists()) {
                     tasks = docSnap.data().taskList || [];
                 } else {
-                    tasks = []; // Kui baas on tühi
+                    tasks = []; 
                 }
                 updateUIAfterDataLoad();
                 
-                // Kui mängujuht on ekraanil, uuendame kohe nimekirja
                 if (!document.getElementById('gm-screen').classList.contains('hidden')) {
                     window.renderAdminTasks();
                 }
@@ -250,7 +256,6 @@
             const btnStart = document.getElementById('btn-start');
             const warning = document.getElementById('no-tasks-warning');
             
-            // Ainult siis uuenda, kui oleme avakuval
             if(!screens.start.classList.contains('hidden')) {
                 if(tasks.length === 0) {
                     btnStart.classList.add('opacity-50', 'pointer-events-none');
@@ -279,7 +284,6 @@
             renderTask();
         };
 
-        // Salvestab andmed pilve
         async function saveTasksToCloud() {
             if(gameDocRef) {
                 try {
@@ -443,28 +447,63 @@
             }
 
             const task = tasks[currentTaskIndex];
+            const stepNum = currentTaskIndex + 1;
+            
+            document.getElementById('task-badge').innerText = `Ülesanne ${stepNum} / ${tasks.length}`;
             document.getElementById('task-title').innerText = task.title;
             document.getElementById('task-desc').innerText = task.desc;
             
             const locBox = document.getElementById('location-info-box');
-            if (task.coords) {
-                locBox.classList.remove('hidden');
-                document.getElementById('task-loc-name').innerText = `Kus: ${task.locName || 'Sihtkoht'}`;
-                startTracking(task.coords);
-            } else {
-                locBox.classList.add('hidden');
-            }
+            const descBox = document.getElementById('task-desc');
+            const arriveBtn = document.getElementById('arrive-btn');
+            const uploadLabel = document.getElementById('upload-label');
 
             document.getElementById('success-view').classList.add('hidden');
             document.getElementById('error-message').classList.add('hidden');
             document.getElementById('loading-view').classList.add('hidden');
-            document.getElementById('upload-label').classList.remove('hidden');
             document.getElementById('camera-input').value = ''; 
-            
+
+            // Kas ülesandel on asukoht lisatud?
+            if (task.coords || task.locName) {
+                // Näitame ainult asukohta ja "Olen kohal" nuppu
+                locBox.classList.remove('hidden');
+                document.getElementById('task-loc-name').innerText = `Kus: ${task.locName || 'Sihtkoht'}`;
+                
+                descBox.classList.add('hidden');
+                uploadLabel.classList.add('hidden');
+                arriveBtn.classList.remove('hidden');
+                
+                if (task.coords) {
+                    startTracking(task.coords);
+                } else {
+                    document.getElementById('task-distance').innerText = "Aadressi pole (GPS puudub)";
+                }
+            } else {
+                // Asukohta pole - näitame kohe kirjeldust ja pildistamist
+                locBox.classList.add('hidden');
+                descBox.classList.remove('hidden');
+                uploadLabel.classList.remove('hidden');
+                arriveBtn.classList.add('hidden');
+            }
+
             screens.game.classList.remove('slide-up');
             void screens.game.offsetWidth; 
             screens.game.classList.add('slide-up');
         }
+
+        // Mängija vajutab "Olen kohal!"
+        window.arriveAtLocation = function() {
+            stopTracking();
+            document.getElementById('location-info-box').classList.add('hidden');
+            document.getElementById('arrive-btn').classList.add('hidden');
+            
+            // Näitame ülesannet sujuva ilmumisega
+            document.getElementById('task-desc').classList.remove('hidden');
+            document.getElementById('task-desc').classList.add('fade-in');
+            
+            document.getElementById('upload-label').classList.remove('hidden');
+            document.getElementById('upload-label').classList.add('fade-in');
+        };
 
         // --- CLOUDINARY ---
         document.getElementById('camera-input').addEventListener('change', async function(e) {
@@ -473,6 +512,7 @@
 
             document.getElementById('error-message').classList.add('hidden');
             document.getElementById('upload-label').classList.add('hidden');
+            document.getElementById('task-desc').classList.add('hidden'); // Peidame teksti üleslaadimise ajaks
             document.getElementById('loading-view').classList.remove('hidden');
             document.getElementById('loading-view').classList.add('flex');
 
@@ -506,6 +546,7 @@
                 document.getElementById('loading-view').classList.add('hidden');
                 document.getElementById('loading-view').classList.remove('flex');
                 document.getElementById('upload-label').classList.remove('hidden');
+                document.getElementById('task-desc').classList.remove('hidden');
                 document.getElementById('error-message').classList.remove('hidden');
                 document.getElementById('error-message').innerText = "Viga laadimisel. Proovi uuesti!";
             }
