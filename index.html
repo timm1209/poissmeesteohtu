@@ -51,9 +51,13 @@
                 
                 <div id="no-tasks-warning" class="hidden text-red-500 mb-4 font-bold">Laen andmeid...</div>
                 
-                <button onclick="window.startGame()" id="btn-start" class="w-full py-4 rounded-xl font-bold text-lg text-white bg-green-600 hover:bg-green-700 active:scale-95 transition-all shadow-lg flex items-center justify-center mt-auto mb-4 opacity-50 pointer-events-none">
-                    <i class="fa-solid fa-play mr-2"></i> Alusta mängu
-                </button>
+                <div class="w-full mt-auto mb-4 flex flex-col gap-3">
+                    <input type="text" id="team-name" placeholder="Sisesta tiimi või mängija nimi" class="w-full px-4 py-4 rounded-xl border-2 border-green-200 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 font-bold text-center text-gray-700 shadow-sm transition-all" onkeydown="if(event.key === 'Enter') window.loginTeam()">
+                    
+                    <button onclick="window.loginTeam()" id="btn-start" class="w-full py-4 rounded-xl font-bold text-lg text-white bg-green-600 hover:bg-green-700 active:scale-95 transition-all shadow-lg flex items-center justify-center opacity-50 pointer-events-none">
+                        <i class="fa-solid fa-play mr-2"></i> Alusta / Jätka
+                    </button>
+                </div>
             </div>
 
             <!-- 2. Mängujuht -->
@@ -163,7 +167,8 @@
     <!-- Firebase ja mänguloogika -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        // Lisatud getDoc funktsioon!
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         // ==========================================
         // 1. SINU FIREBASE'I JA CLOUDINARY SEADED (Täidetud!)
@@ -185,6 +190,7 @@
         let currentTaskIndex = 0;
         let watchId = null;
         let gameDocRef = null;
+        let teamName = ""; // Salvestab mängiva tiimi nime
 
         // Initsialiseeri Firebase
         try {
@@ -249,6 +255,13 @@
             currentTaskIndex = 0;
             screens.start.classList.remove('hidden');
             screens.start.classList.add('flex');
+            
+            // Auto-fill varasemalt kasutatud tiimi nimi
+            const savedName = localStorage.getItem('seiklus_team_name');
+            if(savedName) {
+                document.getElementById('team-name').value = savedName;
+            }
+            
             updateUIAfterDataLoad();
         };
 
@@ -275,13 +288,48 @@
             window.renderAdminTasks();
         };
 
-        window.startGame = function() {
+        // --- UUS LOOGIKA TIIMI SISSELOGIMISEKS ---
+        window.loginTeam = async function() {
             if(tasks.length === 0) return;
-            hideAllScreens();
-            currentTaskIndex = 0;
-            screens.game.classList.remove('hidden');
-            screens.game.classList.add('flex');
-            renderTask();
+            
+            const nameInput = document.getElementById('team-name').value.trim();
+            if(!nameInput) {
+                alert("Palun sisesta tiimi või enda nimi!");
+                return;
+            }
+            
+            teamName = nameInput;
+            localStorage.setItem('seiklus_team_name', teamName); // Jätab brauserisse meelde
+            
+            const btn = document.getElementById('btn-start');
+            btn.innerHTML = '<div class="spinner-small mr-2"></div> Laen andmeid...';
+            btn.disabled = true;
+
+            try {
+                const db = getFirestore();
+                // Otsime pilvest, kas see tiim on juba mänginud
+                const teamRef = doc(db, 'seiklusmang_tiimid', teamName);
+                const snap = await getDoc(teamRef);
+                
+                if (snap.exists()) {
+                    currentTaskIndex = snap.data().currentTaskIndex || 0;
+                } else {
+                    currentTaskIndex = 0;
+                    // Salvestame uue tiimi progressiga 0
+                    await setDoc(teamRef, { currentTaskIndex: 0 });
+                }
+                
+                hideAllScreens();
+                screens.game.classList.remove('hidden');
+                screens.game.classList.add('flex');
+                renderTask();
+            } catch (error) {
+                console.error("Viga tiimi laadimisel:", error);
+                alert("Viga andmebaasiga ühendamisel. Proovi uuesti!");
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-play mr-2"></i> Alusta / Jätka';
+                btn.disabled = false;
+            }
         };
 
         async function saveTasksToCloud() {
@@ -448,7 +496,6 @@
 
             const task = tasks[currentTaskIndex];
             
-            // Kustutatud dünaamiline ülesannete loendur, badge näitab lihtsalt staatilist HTML teksti.
             document.getElementById('task-title').innerText = task.title;
             document.getElementById('task-desc').innerText = task.desc;
             
@@ -462,9 +509,7 @@
             document.getElementById('loading-view').classList.add('hidden');
             document.getElementById('camera-input').value = ''; 
 
-            // Kas ülesandel on asukoht lisatud?
             if (task.coords || task.locName) {
-                // Näitame ainult asukohta ja "Olen kohal" nuppu
                 locBox.classList.remove('hidden');
                 document.getElementById('task-loc-name').innerText = `Kus: ${task.locName || 'Sihtkoht'}`;
                 
@@ -478,7 +523,6 @@
                     document.getElementById('task-distance').innerText = "Aadressi pole (GPS puudub)";
                 }
             } else {
-                // Asukohta pole - näitame kohe kirjeldust ja pildistamist
                 locBox.classList.add('hidden');
                 descBox.classList.remove('hidden');
                 uploadLabel.classList.remove('hidden');
@@ -490,13 +534,11 @@
             screens.game.classList.add('slide-up');
         }
 
-        // Mängija vajutab "Olen kohal!"
         window.arriveAtLocation = function() {
             stopTracking();
             document.getElementById('location-info-box').classList.add('hidden');
             document.getElementById('arrive-btn').classList.add('hidden');
             
-            // Näitame ülesannet sujuva ilmumisega
             document.getElementById('task-desc').classList.remove('hidden');
             document.getElementById('task-desc').classList.add('fade-in');
             
@@ -511,7 +553,7 @@
 
             document.getElementById('error-message').classList.add('hidden');
             document.getElementById('upload-label').classList.add('hidden');
-            document.getElementById('task-desc').classList.add('hidden'); // Peidame teksti üleslaadimise ajaks
+            document.getElementById('task-desc').classList.add('hidden'); 
             document.getElementById('loading-view').classList.remove('hidden');
             document.getElementById('loading-view').classList.add('flex');
 
@@ -534,8 +576,20 @@
                     document.getElementById('success-view').classList.remove('hidden');
                     document.getElementById('success-view').classList.add('flex');
                     
-                    setTimeout(() => {
+                    // UUS: Salvestame progressi reaalajas andmebaasi!
+                    setTimeout(async () => {
                         currentTaskIndex++;
+                        
+                        if (teamName) {
+                            try {
+                                const db = getFirestore();
+                                const teamRef = doc(db, 'seiklusmang_tiimid', teamName);
+                                await setDoc(teamRef, { currentTaskIndex: currentTaskIndex }, { merge: true });
+                            } catch (e) {
+                                console.error("Ei suutnud progressi pilve salvestada:", e);
+                            }
+                        }
+                        
                         renderTask();
                     }, 2000);
                 } else {
@@ -550,6 +604,11 @@
                 document.getElementById('error-message').innerText = "Viga laadimisel. Proovi uuesti!";
             }
         });
+        
+        // Kutsume alguses esile avakuva, mis laeb ka eelneva tiimi nime mälust
+        window.onload = () => {
+            window.showStartScreen();
+        };
     </script>
 </body>
 </html>
