@@ -28,13 +28,39 @@
 <body class="flex flex-col items-center justify-center p-4">
 
     <!-- Parooli aken -->
-    <div id="password-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center fade-in">
-        <div class="bg-white rounded-2xl p-6 w-11/12 max-w-sm shadow-2xl relative">
+    <div id="password-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center fade-in p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative">
             <button onclick="window.closePasswordModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
             <h3 class="text-xl font-extrabold text-gray-800 mb-4"><i class="fa-solid fa-lock text-green-500 mr-2"></i>Mängujuht</h3>
             <input type="password" id="admin-password" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 mb-2" placeholder="Sisesta parool" onkeydown="if(event.key === 'Enter') window.checkPassword()">
             <p id="password-error" class="hidden text-red-500 text-sm font-bold mb-4">Vale parool!</p>
             <button onclick="window.checkPassword()" class="w-full py-3 bg-gray-800 text-white rounded-lg font-bold hover:bg-gray-900 transition-colors mt-2">Sisene</button>
+        </div>
+    </div>
+
+    <!-- Ülesande muutmise aken (UUS) -->
+    <div id="edit-task-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center fade-in p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="window.closeEditModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <h3 class="text-xl font-extrabold text-gray-800 mb-4"><i class="fa-solid fa-pen text-blue-500 mr-2"></i>Muuda ülesannet</h3>
+            
+            <input type="text" id="edit-task-title" placeholder="Pealkiri*" class="w-full mb-3 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <textarea id="edit-task-desc" placeholder="Kirjeldus*" rows="3" class="w-full mb-3 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            
+            <div class="border-t border-gray-200 pt-3 mb-4">
+                <p class="text-xs text-gray-500 font-bold mb-2 uppercase">Asukoht</p>
+                <input type="text" id="edit-task-loc-name" placeholder="Koha nimi mängijale" class="w-full mb-2 px-4 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="text" id="edit-task-address" placeholder="Täpne aadress otsimiseks" class="w-full mb-2 px-4 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                
+                <label class="flex items-center space-x-2 mt-3 cursor-pointer bg-blue-50 p-3 rounded-lg border border-blue-100">
+                    <input type="checkbox" id="edit-task-disable-gps" class="w-5 h-5 text-blue-600 rounded border-gray-300">
+                    <span class="text-sm font-bold text-blue-800">Võta sellelt ülesandelt 50m GPS piirang maha</span>
+                </label>
+            </div>
+            
+            <button id="btn-save-edit" onclick="window.saveEditedTask()" class="w-full py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors flex justify-center items-center shadow-md">
+                Salvesta muudatused
+            </button>
         </div>
     </div>
 
@@ -77,9 +103,8 @@
                         <input type="text" id="new-task-loc-name" placeholder="Koha nimi mängijale (nt. Vana tamm)" class="w-full mb-2 px-4 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <input type="text" id="new-task-address" placeholder="Täpne aadress otsimiseks (nt. Lossi 1, Viljandi)" class="w-full mb-2 px-4 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         
-                        <!-- UUS: GPS piirangu eemaldamise valik -->
                         <label class="flex items-center space-x-2 mt-3 cursor-pointer">
-                            <input type="checkbox" id="new-task-disable-gps" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300">
+                            <input type="checkbox" id="new-task-disable-gps" class="w-4 h-4 text-blue-600 rounded border-gray-300">
                             <span class="text-sm font-medium text-gray-700">Võta sellelt ülesandelt 50m GPS piirang maha</span>
                         </label>
                     </div>
@@ -114,7 +139,7 @@
                     </div>
 
                     <!-- Ülesande sisu -->
-                    <p id="task-desc" class="hidden text-gray-700 text-lg font-medium mt-6 bg-gray-50 p-4 rounded-xl border border-gray-200">Palun oota.</p>
+                    <p id="task-desc" class="hidden text-gray-700 text-lg font-medium mt-6 bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-inner leading-relaxed">Palun oota.</p>
                 </div>
 
                 <div class="mt-auto flex flex-col items-center justify-center w-full pb-4">
@@ -137,7 +162,7 @@
 
                     <div id="loading-view" class="hidden flex-col items-center justify-center py-8">
                         <div class="spinner mb-4"></div>
-                        <p class="text-gray-500 font-bold">Laen pilti üles...</p>
+                        <p class="text-gray-500 font-bold mt-3">Laen pilti üles...</p>
                     </div>
 
                     <!-- Pildistamise nupp -->
@@ -196,6 +221,7 @@
         let teamName = ""; 
         let currentDistance = null; 
         const MAX_DISTANCE_METERS = 50; 
+        let currentEditIndex = -1; // Hoiab meeles, millist ülesannet muudame
 
         try {
             const app = initializeApp(firebaseConfig);
@@ -354,7 +380,7 @@
                 li.className = "flex justify-between items-center bg-white p-3 rounded-xl border border-gray-200 shadow-sm";
                 
                 let locBadge = '';
-                if(task.coords) {
+                if(task.coords || task.originalAddress) {
                     let limitText = task.disableGPS ? 'Piirang maas' : '50m piirang';
                     let limitColor = task.disableGPS ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-700';
                     locBadge = `<span class="inline-block mt-1 text-[10px] font-bold ${limitColor} px-2 py-0.5 rounded-full"><i class="fa-solid fa-location-dot mr-1"></i>${task.locName || 'Asukoht lisatud'} (${limitText})</span>`;
@@ -369,7 +395,8 @@
                     <div class="flex items-center space-x-1">
                         <button onclick="window.moveTaskUp(${index})" class="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 transition-colors ${index === 0 ? 'opacity-30 cursor-not-allowed' : ''}" ${index === 0 ? 'disabled' : ''}><i class="fa-solid fa-chevron-up"></i></button>
                         <button onclick="window.moveTaskDown(${index})" class="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 transition-colors ${index === tasks.length - 1 ? 'opacity-30 cursor-not-allowed' : ''}" ${index === tasks.length - 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-down"></i></button>
-                        <button onclick="window.deleteTask(${index})" class="text-red-500 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors ml-2"><i class="fa-solid fa-trash-can"></i></button>
+                        <button onclick="window.editTask(${index})" class="text-blue-500 hover:text-blue-600 p-1.5 rounded-lg hover:bg-blue-50 transition-colors ml-1" title="Muuda"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="window.deleteTask(${index})" class="text-red-500 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors" title="Kustuta"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                 `;
                 list.appendChild(li);
@@ -418,7 +445,8 @@
                 btn.classList.remove('opacity-80');
             }
             
-            tasks.push({ title, desc, locName, coords, disableGPS });
+            // Salvestame ka algse aadressi, et saaks seda hiljem muuta
+            tasks.push({ title, desc, locName, coords, disableGPS, originalAddress: address });
             await saveTasksToCloud();
             
             document.getElementById('new-task-title').value = '';
@@ -426,6 +454,79 @@
             document.getElementById('new-task-loc-name').value = '';
             document.getElementById('new-task-address').value = '';
             document.getElementById('new-task-disable-gps').checked = false;
+        };
+
+        // --- UUS: ÜLESANDE MUUTMINE ---
+        window.editTask = function(index) {
+            currentEditIndex = index;
+            const task = tasks[index];
+            
+            document.getElementById('edit-task-title').value = task.title || '';
+            document.getElementById('edit-task-desc').value = task.desc || '';
+            document.getElementById('edit-task-loc-name').value = task.locName || '';
+            document.getElementById('edit-task-address').value = task.originalAddress || '';
+            document.getElementById('edit-task-disable-gps').checked = !!task.disableGPS;
+
+            document.getElementById('edit-task-modal').classList.remove('hidden');
+        };
+
+        window.closeEditModal = function() {
+            document.getElementById('edit-task-modal').classList.add('hidden');
+            currentEditIndex = -1;
+        };
+
+        window.saveEditedTask = async function() {
+            if (currentEditIndex === -1) return;
+
+            const title = document.getElementById('edit-task-title').value.trim();
+            const desc = document.getElementById('edit-task-desc').value.trim();
+            const locName = document.getElementById('edit-task-loc-name').value.trim();
+            const address = document.getElementById('edit-task-address').value.trim();
+            const disableGPS = document.getElementById('edit-task-disable-gps').checked;
+
+            if (!title || !desc) {
+                alert('Palun täida pealkiri ja kirjeldus!');
+                return;
+            }
+
+            const oldTask = tasks[currentEditIndex];
+            let coords = oldTask.coords;
+            let originalAddress = oldTask.originalAddress || '';
+
+            // Kui aadressi muudeti, otsime uued koordinaadid
+            if (address !== originalAddress) {
+                if (address === '') {
+                    coords = null;
+                    originalAddress = '';
+                } else {
+                    const btn = document.getElementById('btn-save-edit');
+                    btn.innerText = 'Otsin asukohta...';
+                    btn.disabled = true;
+
+                    try {
+                        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`);
+                        const data = await res.json();
+                        if (data && data.length > 0) {
+                            coords = { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+                            originalAddress = address;
+                        } else {
+                            alert(`Aadressi "${address}" ei leitud. Vana asukoht eemaldatakse.`);
+                            coords = null;
+                            originalAddress = address; // Salvestame stringi, et näidata mis valesti läks
+                        }
+                    } catch (e) {
+                        alert("Aadressi otsimine ebaõnnestus.");
+                        coords = null;
+                    }
+
+                    btn.innerText = 'Salvesta muudatused';
+                    btn.disabled = false;
+                }
+            }
+
+            tasks[currentEditIndex] = { title, desc, locName, coords, disableGPS, originalAddress };
+            await saveTasksToCloud();
+            window.closeEditModal();
         };
 
         window.deleteTask = async function(index) {
@@ -470,7 +571,6 @@
             if ("geolocation" in navigator) {
                 document.getElementById('task-distance').innerText = "Kaugus: otsin GPS signaali...";
                 
-                // Kui piirang on peal, on nupp hall. Kui piirang on maas, on nupp kohe sinine.
                 if (!taskObj.disableGPS) {
                     btn.classList.add('bg-gray-400');
                     btn.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'active:scale-95');
@@ -484,7 +584,6 @@
                     let distText = currentDistance < 1000 ? `Kaugus: ${Math.round(currentDistance)} m` : `Kaugus: ${(currentDistance/1000).toFixed(1)} km`;
                     document.getElementById('task-distance').innerText = distText;
 
-                    // Muudame nupu värvi ainult siis, kui GPS piirang on peal
                     if (!taskObj.disableGPS) {
                         if (currentDistance <= MAX_DISTANCE_METERS) {
                             btn.classList.remove('bg-gray-400');
@@ -565,7 +664,6 @@
             const task = tasks[currentTaskIndex];
             const errorDiv = document.getElementById('error-message');
 
-            // Kontrollime kaugust ainult siis, kui piirang pole maha võetud
             if (task.coords && !task.disableGPS) {
                 if (currentDistance === null) {
                     errorDiv.innerText = "Ootan GPS signaali... Palun oota või luba asukoha jälgimine.";
