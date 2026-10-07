@@ -94,16 +94,16 @@
                 
                 <div class="w-full mt-auto mb-4 flex flex-col gap-3">
                     <div>
-                        <input type="text" id="team-name" placeholder="Sisesta tiimi või mängija nimi" class="w-full px-4 py-4 rounded-xl border-2 border-green-200 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 font-bold text-center text-gray-700 shadow-sm transition-all" onkeydown="if(event.key === 'Enter') window.loginTeam(false)">
+                        <input type="text" id="team-name" placeholder="Sisesta tiimi või mängija nimi" class="w-full px-4 py-4 rounded-xl border-2 border-green-200 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 font-bold text-center text-gray-700 shadow-sm transition-all" onkeydown="if(event.key === 'Enter') window.loginTeam(true)">
                         <p id="team-name-error" class="hidden text-red-500 text-xs font-bold mt-1 text-center">Nimi on kohustuslik!</p>
                     </div>
                     
-                    <button onclick="window.loginTeam(false)" id="btn-continue" class="w-full py-4 rounded-xl font-bold text-lg text-white bg-green-600 hover:bg-green-700 active:scale-95 transition-all shadow-lg flex items-center justify-center opacity-50 pointer-events-none mt-2">
-                        <i class="fa-solid fa-play mr-2"></i> Jätka mängu
+                    <button onclick="window.loginTeam(true)" id="btn-restart" class="w-full py-4 rounded-xl font-bold text-lg text-white bg-green-600 hover:bg-green-700 active:scale-95 transition-all shadow-lg flex items-center justify-center opacity-50 pointer-events-none mt-2">
+                        <i class="fa-solid fa-play mr-2"></i> Alusta uut mängu
                     </button>
                     
-                    <button onclick="window.loginTeam(true)" id="btn-restart" class="w-full py-3 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all shadow-sm flex items-center justify-center opacity-50 pointer-events-none border border-gray-200">
-                        <i class="fa-solid fa-rotate-right mr-2"></i> Alusta uut mängu
+                    <button onclick="window.loginTeam(false)" id="btn-continue" class="w-full py-3 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all shadow-sm flex items-center justify-center opacity-50 pointer-events-none border border-gray-200">
+                        <i class="fa-solid fa-forward mr-2"></i> Jätka mängu
                     </button>
                 </div>
             </div>
@@ -341,7 +341,6 @@
             window.renderAdminTasks();
         };
 
-        // Kutsutakse välja, kui vajutatakse "Jätka" (isRestart = false) või "Alusta uut" (isRestart = true)
         window.loginTeam = async function(isRestart = false) {
             if(tasks.length === 0) return;
             
@@ -353,7 +352,6 @@
             document.getElementById('team-name-error').classList.add('hidden');
             
             if (isRestart) {
-                // Avame hoiatava akna
                 document.getElementById('confirm-restart-modal').classList.remove('hidden');
                 return;
             }
@@ -373,8 +371,10 @@
             const btnContinue = document.getElementById('btn-continue');
             const btnRestart = document.getElementById('btn-restart');
             
-            const originalText = btnContinue.innerHTML;
-            btnContinue.innerHTML = '<div class="spinner-small mr-2"></div> Laen...';
+            const activeBtn = isRestart ? btnRestart : btnContinue;
+            const originalText = activeBtn.innerHTML;
+            
+            activeBtn.innerHTML = '<div class="spinner-small mr-2"></div> Laen...';
             btnContinue.disabled = true;
             btnRestart.disabled = true;
 
@@ -402,7 +402,7 @@
             } catch (error) {
                 alert("Viga andmebaasiga ühendamisel. Proovi uuesti!");
             } finally {
-                btnContinue.innerHTML = originalText;
+                activeBtn.innerHTML = originalText;
                 btnContinue.disabled = false;
                 btnRestart.disabled = false;
             }
