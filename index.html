@@ -76,6 +76,12 @@
                         <p class="text-xs text-gray-500 font-bold mb-2 uppercase">Asukoht (valikuline)</p>
                         <input type="text" id="new-task-loc-name" placeholder="Koha nimi mängijale (nt. Vana tamm)" class="w-full mb-2 px-4 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <input type="text" id="new-task-address" placeholder="Täpne aadress otsimiseks (nt. Lossi 1, Viljandi)" class="w-full mb-2 px-4 py-2 text-sm rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        
+                        <!-- UUS: GPS piirangu eemaldamise valik -->
+                        <label class="flex items-center space-x-2 mt-3 cursor-pointer">
+                            <input type="checkbox" id="new-task-disable-gps" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300">
+                            <span class="text-sm font-medium text-gray-700">Võta sellelt ülesandelt 50m GPS piirang maha</span>
+                        </label>
                     </div>
                     <button id="btn-add-task" onclick="window.addTask()" class="w-full py-3 bg-gray-800 text-white rounded-lg font-bold hover:bg-gray-900 transition-colors flex justify-center items-center">
                         <i class="fa-solid fa-plus mr-2" id="add-icon"></i> 
@@ -188,8 +194,8 @@
         let watchId = null;
         let gameDocRef = null;
         let teamName = ""; 
-        let currentDistance = null; // Globaalne muutuja kauguse hoidmiseks
-        const MAX_DISTANCE_METERS = 50; // GPS PIIRANG MEETRITES
+        let currentDistance = null; 
+        const MAX_DISTANCE_METERS = 50; 
 
         try {
             const app = initializeApp(firebaseConfig);
@@ -349,7 +355,9 @@
                 
                 let locBadge = '';
                 if(task.coords) {
-                    locBadge = `<span class="inline-block mt-1 text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full"><i class="fa-solid fa-location-dot mr-1"></i>${task.locName || 'Asukoht lisatud'}</span>`;
+                    let limitText = task.disableGPS ? 'Piirang maas' : '50m piirang';
+                    let limitColor = task.disableGPS ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-700';
+                    locBadge = `<span class="inline-block mt-1 text-[10px] font-bold ${limitColor} px-2 py-0.5 rounded-full"><i class="fa-solid fa-location-dot mr-1"></i>${task.locName || 'Asukoht lisatud'} (${limitText})</span>`;
                 }
 
                 li.innerHTML = `
@@ -373,6 +381,7 @@
             const desc = document.getElementById('new-task-desc').value.trim();
             const locName = document.getElementById('new-task-loc-name').value.trim();
             const address = document.getElementById('new-task-address').value.trim();
+            const disableGPS = document.getElementById('new-task-disable-gps').checked;
             
             if (!title || !desc) {
                 alert('Palun täida nii pealkiri kui ka kirjeldus!');
@@ -409,13 +418,14 @@
                 btn.classList.remove('opacity-80');
             }
             
-            tasks.push({ title, desc, locName, coords });
+            tasks.push({ title, desc, locName, coords, disableGPS });
             await saveTasksToCloud();
             
             document.getElementById('new-task-title').value = '';
             document.getElementById('new-task-desc').value = '';
             document.getElementById('new-task-loc-name').value = '';
             document.getElementById('new-task-address').value = '';
+            document.getElementById('new-task-disable-gps').checked = false;
         };
 
         window.deleteTask = async function(index) {
@@ -453,29 +463,36 @@
             return R * c;
         }
 
-        function startTracking(targetCoords) {
+        function startTracking(targetCoords, taskObj) {
             currentDistance = null;
             const btn = document.getElementById('arrive-btn');
             
             if ("geolocation" in navigator) {
                 document.getElementById('task-distance').innerText = "Kaugus: otsin GPS signaali...";
                 
-                // Teeme nupu halliks, kuni GPS kinnitab lähedust
-                btn.classList.add('bg-gray-400');
-                btn.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'active:scale-95');
+                // Kui piirang on peal, on nupp hall. Kui piirang on maas, on nupp kohe sinine.
+                if (!taskObj.disableGPS) {
+                    btn.classList.add('bg-gray-400');
+                    btn.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'active:scale-95');
+                } else {
+                    btn.classList.remove('bg-gray-400');
+                    btn.classList.add('bg-blue-600', 'hover:bg-blue-700', 'active:scale-95');
+                }
 
                 watchId = navigator.geolocation.watchPosition((position) => {
                     currentDistance = calculateDistance(position.coords.latitude, position.coords.longitude, targetCoords.lat, targetCoords.lon);
                     let distText = currentDistance < 1000 ? `Kaugus: ${Math.round(currentDistance)} m` : `Kaugus: ${(currentDistance/1000).toFixed(1)} km`;
                     document.getElementById('task-distance').innerText = distText;
 
-                    // Muudame nupu värvi sõltuvalt kaugusest
-                    if (currentDistance <= MAX_DISTANCE_METERS) {
-                        btn.classList.remove('bg-gray-400');
-                        btn.classList.add('bg-blue-600', 'hover:bg-blue-700', 'active:scale-95');
-                    } else {
-                        btn.classList.add('bg-gray-400');
-                        btn.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'active:scale-95');
+                    // Muudame nupu värvi ainult siis, kui GPS piirang on peal
+                    if (!taskObj.disableGPS) {
+                        if (currentDistance <= MAX_DISTANCE_METERS) {
+                            btn.classList.remove('bg-gray-400');
+                            btn.classList.add('bg-blue-600', 'hover:bg-blue-700', 'active:scale-95');
+                        } else {
+                            btn.classList.add('bg-gray-400');
+                            btn.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'active:scale-95');
+                        }
                     }
                 }, (error) => {
                     document.getElementById('task-distance').innerText = "Kaugus: asukoht teadmata (luba GPS)";
@@ -517,7 +534,6 @@
             document.getElementById('loading-view').classList.add('hidden');
             document.getElementById('camera-input').value = ''; 
             
-            // Taastame nupu algse ilusa disaini juhuks, kui asukohta polegi lisatud
             arriveBtn.className = "hidden w-full py-4 text-white rounded-xl font-bold text-lg shadow-lg mb-4 transition-all bg-blue-600 hover:bg-blue-700 active:scale-95";
 
             if (task.coords || task.locName) {
@@ -529,7 +545,7 @@
                 arriveBtn.classList.remove('hidden');
                 
                 if (task.coords) {
-                    startTracking(task.coords);
+                    startTracking(task.coords, task);
                 } else {
                     document.getElementById('task-distance').innerText = "Aadressi pole (GPS puudub)";
                 }
@@ -549,8 +565,8 @@
             const task = tasks[currentTaskIndex];
             const errorDiv = document.getElementById('error-message');
 
-            // Kontrollime kaugust juhul, kui ülesandel on koordinaadid
-            if (task.coords) {
+            // Kontrollime kaugust ainult siis, kui piirang pole maha võetud
+            if (task.coords && !task.disableGPS) {
                 if (currentDistance === null) {
                     errorDiv.innerText = "Ootan GPS signaali... Palun oota või luba asukoha jälgimine.";
                     errorDiv.classList.remove('hidden');
@@ -565,7 +581,6 @@
                 }
             }
 
-            // Kui oleme piisavalt lähedal või GPS puudub:
             errorDiv.classList.add('hidden');
             stopTracking();
             document.getElementById('location-info-box').classList.add('hidden');
