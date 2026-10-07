@@ -67,19 +67,6 @@
                     <button onclick="window.showStartScreen()" class="text-gray-500 hover:text-gray-800 px-3 py-2 bg-gray-100 rounded-lg text-sm font-bold flex items-center"><i class="fa-solid fa-arrow-left mr-1"></i> Tagasi</button>
                 </div>
 
-                <!-- MÄNGU ÜLDISED SEADED -->
-                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6">
-                    <h3 class="font-bold text-gray-700 mb-3 text-sm uppercase tracking-wide"><i class="fa-solid fa-sliders text-blue-500 mr-2"></i>Üldised seaded</h3>
-                    <div class="flex justify-between items-center mb-3">
-                        <label for="gps-toggle" class="font-bold text-sm text-gray-700 cursor-pointer">GPS piirang nupule "Olen kohal"</label>
-                        <input type="checkbox" id="gps-toggle" onchange="window.saveSettings()" class="w-5 h-5 text-green-600 rounded border-gray-300 focus:ring-green-500 cursor-pointer accent-green-600">
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <label for="gps-radius" class="font-bold text-sm text-gray-700">Lubatud raadius (meetrit)</label>
-                        <input type="number" id="gps-radius" onchange="window.saveSettings()" min="5" max="5000" class="w-20 px-2 py-1 text-center rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 font-bold">
-                    </div>
-                </div>
-
                 <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6">
                     <h3 class="font-bold text-gray-700 mb-3 text-sm uppercase tracking-wide">Lisa uus ülesanne</h3>
                     <input type="text" id="new-task-title" placeholder="Pealkiri (nt. Punkt 1)*" class="w-full mb-3 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500">
@@ -120,7 +107,7 @@
                         </div>
                     </div>
 
-                    <!-- Ülesande sisu (algselt peidus, kui on asukoht) -->
+                    <!-- Ülesande sisu -->
                     <p id="task-desc" class="hidden text-gray-700 text-lg font-medium mt-6 bg-gray-50 p-4 rounded-xl border border-gray-200">Palun oota.</p>
                 </div>
 
@@ -129,7 +116,7 @@
 
                     <!-- Olen kohal nupp -->
                     <button id="arrive-btn" onclick="window.arriveAtLocation()" class="hidden w-full py-4 bg-blue-600 text-white rounded-xl font-bold text-lg hover:bg-blue-700 active:scale-95 transition-all shadow-lg mb-4">
-                        <i id="arrive-icon" class="fa-solid fa-person-walking mr-2"></i> <span id="arrive-text">Olen kohal!</span>
+                        <i class="fa-solid fa-person-walking mr-2"></i> Olen kohal!
                     </button>
 
                     <div id="success-view" class="hidden flex-col items-center justify-center w-full mb-4 fade-in">
@@ -147,7 +134,7 @@
                         <p class="text-gray-500 font-bold">Laen pilti üles...</p>
                     </div>
 
-                    <!-- Pildistamise nupp (algselt peidus, kui on asukoht) -->
+                    <!-- Pildistamise nupp -->
                     <label id="upload-label" for="camera-input" class="hidden w-full border-2 border-dashed border-green-400 bg-green-50 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer hover:bg-green-100 hover:border-green-500 transition-all group shadow-sm active:scale-95">
                         <div class="bg-white text-green-600 rounded-full w-16 h-16 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-md"><i class="fa-solid fa-camera text-3xl"></i></div>
                         <span class="font-extrabold text-gray-700 text-lg">Tee pilt või lae üles</span>
@@ -183,8 +170,6 @@
         import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         // ==========================================
-        // 1. SINU FIREBASE'I JA CLOUDINARY SEADED
-        // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyCSr1nNuL-HvBRbveSyKJtI1sVF3xwXnLY",
             authDomain: "seiklusmang-d69a0.firebaseapp.com",
@@ -199,15 +184,13 @@
         // ==========================================
 
         let tasks = [];
-        let gameSettings = { gpsEnabled: false, gpsRadius: 50 }; // Vaikimisi seaded
-        
         let currentTaskIndex = 0;
         let watchId = null;
-        let currentDistance = null; // Mängija viimane teadaolev kaugus
         let gameDocRef = null;
         let teamName = ""; 
+        let currentDistance = null; // Globaalne muutuja kauguse hoidmiseks
+        const MAX_DISTANCE_METERS = 50; // GPS PIIRANG MEETRITES
 
-        // Initsialiseeri Firebase
         try {
             const app = initializeApp(firebaseConfig);
             const db = getFirestore(app);
@@ -215,29 +198,19 @@
 
             onSnapshot(gameDocRef, (docSnap) => {
                 if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    tasks = data.taskList || [];
-                    // Lae pilvest seaded (kui on olemas)
-                    gameSettings = data.settings || { gpsEnabled: false, gpsRadius: 50 };
+                    tasks = docSnap.data().taskList || [];
                 } else {
                     tasks = []; 
-                    gameSettings = { gpsEnabled: false, gpsRadius: 50 };
                 }
                 updateUIAfterDataLoad();
                 
                 if (!document.getElementById('gm-screen').classList.contains('hidden')) {
                     window.renderAdminTasks();
-                    window.updateAdminSettingsUI();
-                }
-                
-                // Kui mängija on juba mängus, värskenda tema nupu olekut reaalajas
-                if (!document.getElementById('game-screen').classList.contains('hidden')) {
-                    updateArriveButton(); 
                 }
             });
         } catch(error) {
-            console.error("Firebase'i viga:", error);
-            document.getElementById('no-tasks-warning').innerText = "Firebase on seadistamata! Muuda koodis firebaseConfig andmeid.";
+            console.error("Firebase viga:", error);
+            document.getElementById('no-tasks-warning').innerText = "Firebase on seadistamata!";
             document.getElementById('no-tasks-warning').classList.remove('hidden');
         }
 
@@ -285,7 +258,6 @@
             if(savedName) {
                 document.getElementById('team-name').value = savedName;
             }
-            
             updateUIAfterDataLoad();
         };
 
@@ -310,37 +282,8 @@
             screens.gm.classList.remove('hidden');
             screens.gm.classList.add('flex');
             window.renderAdminTasks();
-            window.updateAdminSettingsUI();
         };
 
-        // Salvestame nii ülesanded kui ka üldseaded
-        async function saveGameDataToCloud() {
-            if(gameDocRef) {
-                try {
-                    await setDoc(gameDocRef, { 
-                        taskList: tasks,
-                        settings: gameSettings
-                    });
-                } catch(error) {
-                    console.error("Viga salvestamisel:", error);
-                    alert("Andmete salvestamine ebaõnnestus!");
-                }
-            }
-        }
-
-        // --- MÄNGUJUHI SEADETE LOOGIKA ---
-        window.updateAdminSettingsUI = function() {
-            document.getElementById('gps-toggle').checked = gameSettings.gpsEnabled;
-            document.getElementById('gps-radius').value = gameSettings.gpsRadius;
-        };
-
-        window.saveSettings = async function() {
-            gameSettings.gpsEnabled = document.getElementById('gps-toggle').checked;
-            gameSettings.gpsRadius = parseInt(document.getElementById('gps-radius').value) || 50;
-            await saveGameDataToCloud();
-        };
-
-        // --- TIIMI SISSELOGIMINE ---
         window.loginTeam = async function() {
             if(tasks.length === 0) return;
             
@@ -351,7 +294,7 @@
             }
             
             teamName = nameInput;
-            localStorage.setItem('seiklus_team_name', teamName); 
+            localStorage.setItem('seiklus_team_name', teamName);
             
             const btn = document.getElementById('btn-start');
             btn.innerHTML = '<div class="spinner-small mr-2"></div> Laen andmeid...';
@@ -374,13 +317,22 @@
                 screens.game.classList.add('flex');
                 renderTask();
             } catch (error) {
-                console.error("Viga tiimi laadimisel:", error);
                 alert("Viga andmebaasiga ühendamisel. Proovi uuesti!");
             } finally {
                 btn.innerHTML = '<i class="fa-solid fa-play mr-2"></i> Alusta / Jätka';
                 btn.disabled = false;
             }
         };
+
+        async function saveTasksToCloud() {
+            if(gameDocRef) {
+                try {
+                    await setDoc(gameDocRef, { taskList: tasks });
+                } catch(error) {
+                    alert("Andmete salvestamine ebaõnnestus!");
+                }
+            }
+        }
 
         window.renderAdminTasks = function() {
             const list = document.getElementById('admin-task-list');
@@ -458,7 +410,7 @@
             }
             
             tasks.push({ title, desc, locName, coords });
-            await saveGameDataToCloud();
+            await saveTasksToCloud();
             
             document.getElementById('new-task-title').value = '';
             document.getElementById('new-task-desc').value = '';
@@ -468,7 +420,7 @@
 
         window.deleteTask = async function(index) {
             tasks.splice(index, 1);
-            await saveGameDataToCloud();
+            await saveTasksToCloud();
         };
 
         window.moveTaskUp = async function(index) {
@@ -476,7 +428,7 @@
                 const temp = tasks[index];
                 tasks[index] = tasks[index - 1];
                 tasks[index - 1] = temp;
-                await saveGameDataToCloud();
+                await saveTasksToCloud();
             }
         };
 
@@ -485,7 +437,7 @@
                 const temp = tasks[index];
                 tasks[index] = tasks[index + 1];
                 tasks[index + 1] = temp;
-                await saveGameDataToCloud();
+                await saveTasksToCloud();
             }
         };
 
@@ -501,71 +453,35 @@
             return R * c;
         }
 
-        // See funktsioon kontrollib, kas nupul tohib vajutada või mitte
-        function updateArriveButton() {
-            const btn = document.getElementById('arrive-btn');
-            const icon = document.getElementById('arrive-icon');
-            const text = document.getElementById('arrive-text');
-            
-            if (!tasks[currentTaskIndex]) return;
-            const task = tasks[currentTaskIndex];
-
-            // Kui GPS piirang on väljas VÕI ülesandel pole GPS koordinaate, luba kohe
-            if (!gameSettings.gpsEnabled || !task.coords) {
-                btn.disabled = false;
-                btn.classList.remove('opacity-50', 'bg-gray-400', 'cursor-not-allowed');
-                btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
-                icon.className = "fa-solid fa-person-walking mr-2";
-                text.innerText = "Olen kohal!";
-                return;
-            }
-
-            // Kui GPS piirang on sees:
-            if (currentDistance === null || currentDistance > gameSettings.gpsRadius) {
-                // Liiga kaugel
-                btn.disabled = true;
-                btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-                btn.classList.add('bg-gray-400', 'opacity-50', 'cursor-not-allowed');
-                icon.className = "fa-solid fa-lock mr-2";
-                
-                if (currentDistance === null) {
-                    text.innerText = "Otsin asukohta...";
-                } else {
-                    text.innerText = "Oled liiga kaugel";
-                }
-            } else {
-                // Piisavalt lähedal!
-                btn.disabled = false;
-                btn.classList.remove('opacity-50', 'bg-gray-400', 'cursor-not-allowed');
-                btn.classList.add('bg-green-600', 'hover:bg-green-700'); // Muutub roheliseks
-                icon.className = "fa-solid fa-unlock mr-2";
-                text.innerText = "Olen kohal!";
-            }
-        }
-
         function startTracking(targetCoords) {
-            currentDistance = null; // Algselt teadmata
-            updateArriveButton();
-
+            currentDistance = null;
+            const btn = document.getElementById('arrive-btn');
+            
             if ("geolocation" in navigator) {
                 document.getElementById('task-distance').innerText = "Kaugus: otsin GPS signaali...";
                 
+                // Teeme nupu halliks, kuni GPS kinnitab lähedust
+                btn.classList.add('bg-gray-400');
+                btn.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'active:scale-95');
+
                 watchId = navigator.geolocation.watchPosition((position) => {
                     currentDistance = calculateDistance(position.coords.latitude, position.coords.longitude, targetCoords.lat, targetCoords.lon);
-                    
                     let distText = currentDistance < 1000 ? `Kaugus: ${Math.round(currentDistance)} m` : `Kaugus: ${(currentDistance/1000).toFixed(1)} km`;
                     document.getElementById('task-distance').innerText = distText;
-                    
-                    updateArriveButton(); // Igal GPS uuendusel kontrollime nupu staatust
+
+                    // Muudame nupu värvi sõltuvalt kaugusest
+                    if (currentDistance <= MAX_DISTANCE_METERS) {
+                        btn.classList.remove('bg-gray-400');
+                        btn.classList.add('bg-blue-600', 'hover:bg-blue-700', 'active:scale-95');
+                    } else {
+                        btn.classList.add('bg-gray-400');
+                        btn.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'active:scale-95');
+                    }
                 }, (error) => {
                     document.getElementById('task-distance').innerText = "Kaugus: asukoht teadmata (luba GPS)";
-                    currentDistance = null;
-                    updateArriveButton();
                 }, { enableHighAccuracy: true });
             } else {
                 document.getElementById('task-distance').innerText = "Kaugus: GPS puudub";
-                currentDistance = null;
-                updateArriveButton();
             }
         }
 
@@ -600,6 +516,9 @@
             document.getElementById('error-message').classList.add('hidden');
             document.getElementById('loading-view').classList.add('hidden');
             document.getElementById('camera-input').value = ''; 
+            
+            // Taastame nupu algse ilusa disaini juhuks, kui asukohta polegi lisatud
+            arriveBtn.className = "hidden w-full py-4 text-white rounded-xl font-bold text-lg shadow-lg mb-4 transition-all bg-blue-600 hover:bg-blue-700 active:scale-95";
 
             if (task.coords || task.locName) {
                 locBox.classList.remove('hidden');
@@ -609,9 +528,6 @@
                 uploadLabel.classList.add('hidden');
                 arriveBtn.classList.remove('hidden');
                 
-                // Reset button state
-                updateArriveButton();
-
                 if (task.coords) {
                     startTracking(task.coords);
                 } else {
@@ -630,6 +546,27 @@
         }
 
         window.arriveAtLocation = function() {
+            const task = tasks[currentTaskIndex];
+            const errorDiv = document.getElementById('error-message');
+
+            // Kontrollime kaugust juhul, kui ülesandel on koordinaadid
+            if (task.coords) {
+                if (currentDistance === null) {
+                    errorDiv.innerText = "Ootan GPS signaali... Palun oota või luba asukoha jälgimine.";
+                    errorDiv.classList.remove('hidden');
+                    setTimeout(() => errorDiv.classList.add('hidden'), 3000);
+                    return;
+                }
+                if (currentDistance > MAX_DISTANCE_METERS) {
+                    errorDiv.innerText = `Oled veel liiga kaugel! Mine lähemale (kuni ${MAX_DISTANCE_METERS}m). Hetkel oled ${Math.round(currentDistance)} meetri kaugusel.`;
+                    errorDiv.classList.remove('hidden');
+                    setTimeout(() => errorDiv.classList.add('hidden'), 5000);
+                    return;
+                }
+            }
+
+            // Kui oleme piisavalt lähedal või GPS puudub:
+            errorDiv.classList.add('hidden');
             stopTracking();
             document.getElementById('location-info-box').classList.add('hidden');
             document.getElementById('arrive-btn').classList.add('hidden');
