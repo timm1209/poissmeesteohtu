@@ -38,7 +38,22 @@
         </div>
     </div>
 
-    <!-- Ülesande muutmise aken (UUS) -->
+    <!-- Mängu nullimise hoiatuse aken -->
+    <div id="confirm-restart-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center fade-in p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center">
+            <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-triangle-exclamation text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-extrabold text-gray-800 mb-2">Alustad uuesti?</h3>
+            <p class="text-gray-600 mb-6 text-sm">See kustutab sinu tiimi senise progressi ja alustad puhtalt lehelt. Oled kindel?</p>
+            <div class="flex space-x-3">
+                <button onclick="document.getElementById('confirm-restart-modal').classList.add('hidden')" class="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors">Tühista</button>
+                <button onclick="window.confirmRestart()" class="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-md">Jah, alusta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ülesande muutmise aken -->
     <div id="edit-task-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center fade-in p-4">
         <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button onclick="window.closeEditModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
@@ -78,10 +93,17 @@
                 <div id="no-tasks-warning" class="hidden text-red-500 mb-4 font-bold">Laen andmeid...</div>
                 
                 <div class="w-full mt-auto mb-4 flex flex-col gap-3">
-                    <input type="text" id="team-name" placeholder="Sisesta tiimi või mängija nimi" class="w-full px-4 py-4 rounded-xl border-2 border-green-200 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 font-bold text-center text-gray-700 shadow-sm transition-all" onkeydown="if(event.key === 'Enter') window.loginTeam()">
+                    <div>
+                        <input type="text" id="team-name" placeholder="Sisesta tiimi või mängija nimi" class="w-full px-4 py-4 rounded-xl border-2 border-green-200 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/50 font-bold text-center text-gray-700 shadow-sm transition-all" onkeydown="if(event.key === 'Enter') window.loginTeam(false)">
+                        <p id="team-name-error" class="hidden text-red-500 text-xs font-bold mt-1 text-center">Nimi on kohustuslik!</p>
+                    </div>
                     
-                    <button onclick="window.loginTeam()" id="btn-start" class="w-full py-4 rounded-xl font-bold text-lg text-white bg-green-600 hover:bg-green-700 active:scale-95 transition-all shadow-lg flex items-center justify-center opacity-50 pointer-events-none">
-                        <i class="fa-solid fa-play mr-2"></i> Alusta / Jätka
+                    <button onclick="window.loginTeam(false)" id="btn-continue" class="w-full py-4 rounded-xl font-bold text-lg text-white bg-green-600 hover:bg-green-700 active:scale-95 transition-all shadow-lg flex items-center justify-center opacity-50 pointer-events-none mt-2">
+                        <i class="fa-solid fa-play mr-2"></i> Jätka mängu
+                    </button>
+                    
+                    <button onclick="window.loginTeam(true)" id="btn-restart" class="w-full py-3 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all shadow-sm flex items-center justify-center opacity-50 pointer-events-none border border-gray-200">
+                        <i class="fa-solid fa-rotate-right mr-2"></i> Alusta uut mängu
                     </button>
                 </div>
             </div>
@@ -221,7 +243,7 @@
         let teamName = ""; 
         let currentDistance = null; 
         const MAX_DISTANCE_METERS = 50; 
-        let currentEditIndex = -1; // Hoiab meeles, millist ülesannet muudame
+        let currentEditIndex = -1;
 
         try {
             const app = initializeApp(firebaseConfig);
@@ -294,16 +316,19 @@
         };
 
         function updateUIAfterDataLoad() {
-            const btnStart = document.getElementById('btn-start');
+            const btnContinue = document.getElementById('btn-continue');
+            const btnRestart = document.getElementById('btn-restart');
             const warning = document.getElementById('no-tasks-warning');
             
             if(!screens.start.classList.contains('hidden')) {
                 if(tasks.length === 0) {
-                    btnStart.classList.add('opacity-50', 'pointer-events-none');
+                    btnContinue.classList.add('opacity-50', 'pointer-events-none');
+                    btnRestart.classList.add('opacity-50', 'pointer-events-none');
                     warning.innerText = "Mängus pole ühtegi ülesannet! Lisa need hammasratta alt.";
                     warning.classList.remove('hidden');
                 } else {
-                    btnStart.classList.remove('opacity-50', 'pointer-events-none');
+                    btnContinue.classList.remove('opacity-50', 'pointer-events-none');
+                    btnRestart.classList.remove('opacity-50', 'pointer-events-none');
                     warning.classList.add('hidden');
                 }
             }
@@ -316,32 +341,58 @@
             window.renderAdminTasks();
         };
 
-        window.loginTeam = async function() {
+        // Kutsutakse välja, kui vajutatakse "Jätka" (isRestart = false) või "Alusta uut" (isRestart = true)
+        window.loginTeam = async function(isRestart = false) {
             if(tasks.length === 0) return;
             
             const nameInput = document.getElementById('team-name').value.trim();
             if(!nameInput) {
-                alert("Palun sisesta tiimi või enda nimi!");
+                document.getElementById('team-name-error').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('team-name-error').classList.add('hidden');
+            
+            if (isRestart) {
+                // Avame hoiatava akna
+                document.getElementById('confirm-restart-modal').classList.remove('hidden');
                 return;
             }
             
-            teamName = nameInput;
+            await executeLogin(false);
+        };
+        
+        window.confirmRestart = async function() {
+            document.getElementById('confirm-restart-modal').classList.add('hidden');
+            await executeLogin(true);
+        };
+
+        async function executeLogin(isRestart) {
+            teamName = document.getElementById('team-name').value.trim();
             localStorage.setItem('seiklus_team_name', teamName);
             
-            const btn = document.getElementById('btn-start');
-            btn.innerHTML = '<div class="spinner-small mr-2"></div> Laen andmeid...';
-            btn.disabled = true;
+            const btnContinue = document.getElementById('btn-continue');
+            const btnRestart = document.getElementById('btn-restart');
+            
+            const originalText = btnContinue.innerHTML;
+            btnContinue.innerHTML = '<div class="spinner-small mr-2"></div> Laen...';
+            btnContinue.disabled = true;
+            btnRestart.disabled = true;
 
             try {
                 const db = getFirestore();
                 const teamRef = doc(db, 'seiklusmang_tiimid', teamName);
-                const snap = await getDoc(teamRef);
                 
-                if (snap.exists()) {
-                    currentTaskIndex = snap.data().currentTaskIndex || 0;
-                } else {
+                if (isRestart) {
                     currentTaskIndex = 0;
                     await setDoc(teamRef, { currentTaskIndex: 0 });
+                } else {
+                    const snap = await getDoc(teamRef);
+                    if (snap.exists()) {
+                        currentTaskIndex = snap.data().currentTaskIndex || 0;
+                    } else {
+                        currentTaskIndex = 0;
+                        await setDoc(teamRef, { currentTaskIndex: 0 });
+                    }
                 }
                 
                 hideAllScreens();
@@ -351,10 +402,11 @@
             } catch (error) {
                 alert("Viga andmebaasiga ühendamisel. Proovi uuesti!");
             } finally {
-                btn.innerHTML = '<i class="fa-solid fa-play mr-2"></i> Alusta / Jätka';
-                btn.disabled = false;
+                btnContinue.innerHTML = originalText;
+                btnContinue.disabled = false;
+                btnRestart.disabled = false;
             }
-        };
+        }
 
         async function saveTasksToCloud() {
             if(gameDocRef) {
@@ -445,7 +497,6 @@
                 btn.classList.remove('opacity-80');
             }
             
-            // Salvestame ka algse aadressi, et saaks seda hiljem muuta
             tasks.push({ title, desc, locName, coords, disableGPS, originalAddress: address });
             await saveTasksToCloud();
             
@@ -456,7 +507,6 @@
             document.getElementById('new-task-disable-gps').checked = false;
         };
 
-        // --- UUS: ÜLESANDE MUUTMINE ---
         window.editTask = function(index) {
             currentEditIndex = index;
             const task = tasks[index];
@@ -493,7 +543,6 @@
             let coords = oldTask.coords;
             let originalAddress = oldTask.originalAddress || '';
 
-            // Kui aadressi muudeti, otsime uued koordinaadid
             if (address !== originalAddress) {
                 if (address === '') {
                     coords = null;
@@ -512,7 +561,7 @@
                         } else {
                             alert(`Aadressi "${address}" ei leitud. Vana asukoht eemaldatakse.`);
                             coords = null;
-                            originalAddress = address; // Salvestame stringi, et näidata mis valesti läks
+                            originalAddress = address; 
                         }
                     } catch (e) {
                         alert("Aadressi otsimine ebaõnnestus.");
